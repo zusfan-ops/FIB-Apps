@@ -1,0 +1,35 @@
+{
+    "name": "FIB UNDIP — Sastra Jepang & Spaced Repetition Suite",
+    "short_name": "FIB UNDIP",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#141926",
+    "theme_color": "#F43F5E",
+    "description": "Aplikasi Belajar Bahasa & Sastra Jepang: SRS SM-2, Reading Tracker, Grammar & Bungo, Honyaku Studio, Agenda JLPT.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
