@@ -7,6 +7,7 @@ import '../../services/update_checker_service.dart';
 import '../campus/class_schedule_screen.dart';
 import '../campus/campus_diary_screen.dart';
 import '../campus/campus_photo_screen.dart';
+import '../chat/chat_list_screen.dart';
 import '../dictionary/dictionary_screen.dart';
 import '../thesis/thesis_screen.dart';
 import 'profile_screen.dart';
@@ -38,6 +39,16 @@ class _MoreScreenState extends State<MoreScreen> {
                 letterSpacing: 1,
                 color: Color(0xFFF43F5E),
               ),
+            ),
+          ),
+          _menuTile(
+            context,
+            icon: Icons.chat_rounded,
+            title: 'Chat & Diskusi Mahasiswa FIB',
+            subtitle: 'Komunikasi pesan langsung ala WhatsApp antar mahasiswa',
+            color: const Color(0xFF25D366),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ChatListScreen()),
             ),
           ),
           _menuTile(

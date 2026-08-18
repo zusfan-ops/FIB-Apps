@@ -1,10 +1,16 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/campus_photo.dart';
+import '../../models/user.dart';
 import '../../services/api_client.dart';
+import '../../services/session.dart';
+import '../../theme.dart';
 import '../../widgets/smart_image_view.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
+import '../../widgets/student_profile_dialog.dart';
+import '../chat/chat_room_screen.dart';
 import 'campus_photo_upload_screen.dart';
 
 class CampusPhotoScreen extends StatefulWidget {
@@ -211,7 +217,39 @@ class _CampusPhotoScreenState extends State<CampusPhotoScreen> {
     );
   }
 
+  ImageProvider? _getAvatarProvider(String? avatarUrl) {
+    if (avatarUrl == null || avatarUrl.isEmpty) return null;
+    if (avatarUrl.startsWith('data:image')) {
+      try {
+        final commaIdx = avatarUrl.indexOf(',');
+        if (commaIdx != -1) {
+          final bytes = base64Decode(avatarUrl.substring(commaIdx + 1));
+          return MemoryImage(bytes);
+        }
+      } catch (_) {}
+    }
+    return NetworkImage(avatarUrl);
+  }
+
+  void _openUploaderProfile(CampusPhoto photo) {
+    final student = User(
+      id: photo.userId,
+      name: photo.uploaderName ?? 'Mahasiswa FIB UNDIP',
+      email: '',
+      nim: photo.uploaderNim,
+      studyProgram: photo.uploaderStudyProgram ?? photo.uploaderUniversity,
+      university: photo.uploaderUniversity,
+      jlptLevel: photo.uploaderJlpt,
+      avatarUrl: photo.uploaderAvatar,
+    );
+    StudentProfileDialog.show(context, student);
+  }
+
   Widget _buildPhotoCard(CampusPhoto photo, ThemeData theme) {
+    final currentUserId = Session.instance.user?.id ?? 0;
+    final isNotMe = photo.userId != 0 && photo.userId != currentUserId;
+    final avatarProvider = _getAvatarProvider(photo.uploaderAvatar);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       clipBehavior: Clip.antiAlias,
@@ -224,46 +262,52 @@ class _CampusPhotoScreenState extends State<CampusPhotoScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Pengunggah
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: const Color(0xFFF43F5E),
-                  foregroundColor: Colors.white,
-                  child: Text(
-                    (photo.uploaderName ?? 'M')[0].toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+          InkWell(
+            onTap: () => _openUploaderProfile(photo),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: const Color(0xFFF43F5E),
+                    foregroundColor: Colors.white,
+                    backgroundImage: avatarProvider,
+                    child: avatarProvider == null
+                        ? Text(
+                            (photo.uploaderName ?? 'M')[0].toUpperCase(),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          )
+                        : null,
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        photo.uploaderName ?? 'Mahasiswa Sastra Jepang',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                      Text(
-                        '${photo.location} · ${photo.eventDate ?? ""}',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-                      ),
-                    ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          photo.uploaderName ?? 'Mahasiswa Sastra Jepang',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        Text(
+                          '${photo.uploaderStudyProgram ?? photo.location} · ${photo.eventDate ?? ""}',
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.pink.shade50,
-                    borderRadius: BorderRadius.circular(6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.pink.shade50,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      photo.category.toUpperCase(),
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFF43F5E)),
+                    ),
                   ),
-                  child: Text(
-                    photo.category.toUpperCase(),
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFF43F5E)),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -285,7 +329,7 @@ class _CampusPhotoScreenState extends State<CampusPhotoScreen> {
             ),
           ),
 
-          // Action Bar: Like, Komentar, Share WhatsApp
+          // Action Bar: Like, Komentar, Chat Mahasiswa, Share WhatsApp
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
@@ -302,7 +346,7 @@ class _CampusPhotoScreenState extends State<CampusPhotoScreen> {
                   '${photo.likesCount}',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
 
                 // Tombol Komentar
                 IconButton(
@@ -315,6 +359,30 @@ class _CampusPhotoScreenState extends State<CampusPhotoScreen> {
                 ),
                 const Spacer(),
 
+                // Chat Mahasiswa Button (jika bukan postingan sendiri)
+                if (isNotMe) ...[
+                  IconButton(
+                    icon: const Icon(Icons.chat_rounded, color: AppColors.primary, size: 20),
+                    tooltip: 'Chat Mahasiswa Pengunggah',
+                    onPressed: () {
+                      final student = User(
+                        id: photo.userId,
+                        name: photo.uploaderName ?? 'Mahasiswa FIB UNDIP',
+                        email: '',
+                        nim: photo.uploaderNim,
+                        studyProgram: photo.uploaderStudyProgram ?? photo.uploaderUniversity,
+                        university: photo.uploaderUniversity,
+                        jlptLevel: photo.uploaderJlpt,
+                        avatarUrl: photo.uploaderAvatar,
+                      );
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => ChatRoomScreen(recipient: student)),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 4),
+                ],
+
                 // Tombol Share WhatsApp
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
@@ -324,7 +392,7 @@ class _CampusPhotoScreenState extends State<CampusPhotoScreen> {
                   ),
                   icon: const Icon(Icons.share, size: 14, color: Color(0xFF25D366)),
                   label: const Text(
-                    'WhatsApp',
+                    'WA',
                     style: TextStyle(color: Color(0xFF25D366), fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () => _shareToWhatsApp(photo),

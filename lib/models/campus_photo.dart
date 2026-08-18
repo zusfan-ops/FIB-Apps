@@ -44,6 +44,9 @@ class CampusPhoto {
   final bool isPublic;
   final String? uploaderName;
   final String? uploaderUniversity;
+  final String? uploaderStudyProgram;
+  final String? uploaderNim;
+  final String? uploaderAvatar;
   final String? uploaderJlpt;
   final String createdAt;
   final List<PhotoComment> comments;
@@ -64,6 +67,9 @@ class CampusPhoto {
     this.isPublic = true,
     this.uploaderName,
     this.uploaderUniversity,
+    this.uploaderStudyProgram,
+    this.uploaderNim,
+    this.uploaderAvatar,
     this.uploaderJlpt,
     required this.createdAt,
     this.comments = const [],
@@ -88,6 +94,9 @@ class CampusPhoto {
       isPublic: json['is_public'] as bool? ?? true,
       uploaderName: user?['name'] as String?,
       uploaderUniversity: user?['university'] as String?,
+      uploaderStudyProgram: user?['study_program'] as String?,
+      uploaderNim: user?['nim'] as String?,
+      uploaderAvatar: user?['avatar_url'] as String?,
       uploaderJlpt: user?['jlpt_level'] as String?,
       createdAt: json['created_at'] as String? ?? '',
       comments: rawComments

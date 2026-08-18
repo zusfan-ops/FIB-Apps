@@ -1,16 +1,19 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../models/campus_photo.dart';
 import '../../models/schedule_item.dart';
 import '../../services/api_client.dart';
+import '../../services/chat_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/session.dart';
 import '../../services/tab_switcher.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
-import '../campus/campus_diary_screen.dart';
 import '../campus/campus_photo_screen.dart';
 import '../campus/class_schedule_screen.dart';
+import '../chat/chat_list_screen.dart';
+import '../more/profile_screen.dart';
 import '../../widgets/smart_image_view.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -41,6 +44,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final futures = await Future.wait([
         ApiClient.instance.get('/dashboard'),
         ApiClient.instance.get('/campus-photos?per_page=3'),
+        ChatService.instance.refreshUnreadCount(),
       ]);
 
       final data = futures[0];
@@ -66,41 +70,87 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  ImageProvider? _getAvatarProvider(String? avatarUrl) {
+    if (avatarUrl == null || avatarUrl.isEmpty) return null;
+    if (avatarUrl.startsWith('data:image')) {
+      try {
+        final commaIdx = avatarUrl.indexOf(',');
+        if (commaIdx != -1) {
+          final bytes = base64Decode(avatarUrl.substring(commaIdx + 1));
+          return MemoryImage(bytes);
+        }
+      } catch (_) {}
+    }
+    return NetworkImage(avatarUrl);
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Session.instance.user;
+    final avatarProvider = _getAvatarProvider(user?.avatarUrl);
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E2638),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Image.asset(
-                'assets/images/sakura_logo.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        title: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
+            if (mounted) setState(() {});
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
+            child: Row(
               children: [
-                const Text('FIB UNDIP · 桜言葉', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                Text(
-                  'Halo, ${user?.name.split(' ').first ?? 'Mahasiswa'} 👋',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
+                CircleAvatar(
+                  radius: 17,
+                  backgroundColor: AppColors.primary,
+                  backgroundImage: avatarProvider,
+                  child: avatarProvider == null
+                      ? Text(
+                          user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : 'M',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('FIB UNDIP · 桜言葉', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700)),
+                    Text(
+                      'Halo, ${user?.name.split(' ').first ?? 'Mahasiswa'} 👋',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
         actions: [
+          // WhatsApp Style Chat Shortcut with Unread Counter Badge
+          ValueListenableBuilder<int>(
+            valueListenable: ChatService.instance.totalUnreadNotifier,
+            builder: (context, unreadCount, _) {
+              return IconButton(
+                icon: Badge(
+                  isLabelVisible: unreadCount > 0,
+                  label: Text('$unreadCount', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  backgroundColor: const Color(0xFF25D366),
+                  child: const Icon(Icons.chat_bubble_outline_rounded),
+                ),
+                tooltip: 'Chat Mahasiswa FIB',
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ChatListScreen()),
+                  );
+                  _load();
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loading ? null : _load,
@@ -155,12 +205,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: _quickBtn(
-                  icon: Icons.auto_stories,
-                  label: 'Catatan Diary',
-                  subtitle: 'Refleksi & Kuliah',
+                  icon: Icons.chat_rounded,
+                  label: 'Chat Mahasiswa',
+                  subtitle: 'WhatsApp Style',
                   color: const Color(0xFF10B981),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CampusDiaryScreen()),
+                    MaterialPageRoute(builder: (_) => const ChatListScreen()),
                   ),
                 ),
               ),
@@ -326,7 +376,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -337,41 +386,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
+            if (mounted) setState(() {});
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
               children: [
-                Text(
-                  'Selamat belajar, ${user?.name.split(' ').first ?? 'Mahasiswa'}!',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Selamat belajar, ${user?.name.split(' ').first ?? 'Mahasiswa'}!',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${user?.studyProgram ?? user?.university ?? 'FIB UNDIP'}${user?.nim != null ? ' · NIM: ${user!.nim}' : ''} · Target JLPT ${user?.jlptLevel ?? 'N3'}',
+                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${user?.studyProgram ?? user?.university ?? 'FIB UNDIP'} · Target JLPT ${user?.jlptLevel ?? 'N3'}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                Column(
+                  children: [
+                    const Icon(Icons.local_fire_department, color: Colors.white, size: 28),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$streak hari',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                    ),
+                    const Text('streak', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                  ],
                 ),
               ],
             ),
           ),
-          Column(
-            children: [
-              const Icon(Icons.local_fire_department, color: Colors.white, size: 28),
-              const SizedBox(height: 2),
-              Text(
-                '$streak hari',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-              ),
-              const Text('streak', style: TextStyle(color: Colors.white70, fontSize: 11)),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
