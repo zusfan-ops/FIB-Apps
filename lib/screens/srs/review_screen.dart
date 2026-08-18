@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/card_item.dart';
 import '../../services/api_client.dart';
 import '../../theme.dart';
+import '../../widgets/audio_speaker_button.dart';
 import '../../widgets/common.dart';
 
 class ReviewScreen extends StatefulWidget {
@@ -148,7 +149,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
             children: [
               Text(card.front,
                   style: const TextStyle(fontSize: 56, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              JapaneseAudioButton(text: card.front),
+              const SizedBox(height: 12),
               if (card.readings?.display.isNotEmpty ?? false)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -185,9 +188,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(card.front,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
-              textAlign: TextAlign.center),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(card.front,
+                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+                  textAlign: TextAlign.center),
+              const SizedBox(width: 8),
+              JapaneseAudioButton(text: card.front, isMini: true),
+            ],
+          ),
           if (card.readings?.display.isNotEmpty ?? false)
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -195,12 +205,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
                   textAlign: TextAlign.center),
             ),
-          const Divider(height: 32),
+          const Divider(height: 24),
           if (card.meaning != null)
             Text(card.meaning!,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           if (card.exampleSentence != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -210,11 +220,19 @@ class _ReviewScreenState extends State<ReviewScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(card.exampleSentence!, style: const TextStyle(fontSize: 16)),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(card.exampleSentence!, style: const TextStyle(fontSize: 15)),
+                      ),
+                      JapaneseAudioButton(text: card.exampleSentence!, isMini: true, tooltip: 'Dengarkan Contoh Kalimat'),
+                    ],
+                  ),
                   if (card.exampleTranslation != null) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(card.exampleTranslation!,
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                   ],
                 ],
               ),

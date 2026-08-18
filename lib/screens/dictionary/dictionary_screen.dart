@@ -6,6 +6,7 @@ import '../../models/deck.dart';
 import '../../models/dictionary_entry.dart';
 import '../../services/api_client.dart';
 import '../../theme.dart';
+import '../../widgets/audio_speaker_button.dart';
 import '../../widgets/common.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
 
@@ -168,13 +169,20 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(entry.jlptLevel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                JapaneseAudioButton(text: entry.term, isMini: true),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(entry.jlptLevel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
           ),
         );
@@ -263,6 +271,8 @@ class _DictionaryDetailSheetState extends State<_DictionaryDetailSheet> {
                 Expanded(
                   child: Text(entry.term, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
                 ),
+                JapaneseAudioButton(text: entry.term),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)),
@@ -285,7 +295,15 @@ class _DictionaryDetailSheetState extends State<_DictionaryDetailSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(entry.exampleSentence!, style: const TextStyle(fontSize: 14)),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(entry.exampleSentence!, style: const TextStyle(fontSize: 14)),
+                        ),
+                        JapaneseAudioButton(text: entry.exampleSentence!, isMini: true, tooltip: 'Dengarkan Contoh Kalimat'),
+                      ],
+                    ),
                     if (entry.exampleTranslation != null) ...[
                       const SizedBox(height: 4),
                       Text(entry.exampleTranslation!, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),

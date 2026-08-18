@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/grammar_pattern.dart';
 import '../../services/api_client.dart';
 import '../../theme.dart';
+import '../../widgets/audio_speaker_button.dart';
 import 'grammar_form_screen.dart';
 
 class GrammarDetailScreen extends StatefulWidget {
@@ -78,14 +79,27 @@ class _GrammarDetailScreenState extends State<GrammarDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(p.pattern,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(p.pattern,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800)),
+                    ),
+                    JapaneseAudioButton(
+                      text: p.pattern,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
                 if (p.meaning != null)
-                  Text(p.meaning!,
-                      style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(p.meaning!,
+                        style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                  ),
               ],
             ),
           ),
@@ -106,23 +120,38 @@ class _GrammarDetailScreenState extends State<GrammarDetailScreen> {
           ],
           if (p.examples.isNotEmpty) ...[
             const _InfoCard(title: 'Contoh', icon: Icons.format_quote),
-            ...p.examples.map((e) => Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(e['jp'] ?? '',
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w500)),
-                        const SizedBox(height: 4),
-                        Text(e['id'] ?? '',
-                            style: TextStyle(
-                                color: Colors.grey.shade600, fontSize: 13)),
-                      ],
-                    ),
+            ...p.examples.map((e) {
+              final jpText = e['jp'] ?? '';
+              final idText = e['id'] ?? '';
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(jpText,
+                                style: const TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w500)),
+                            if (idText.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(idText,
+                                  style: TextStyle(
+                                      color: Colors.grey.shade600, fontSize: 13)),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (jpText.isNotEmpty)
+                        JapaneseAudioButton(text: jpText, isMini: true, tooltip: 'Dengarkan Contoh'),
+                    ],
                   ),
-                )),
+                ),
+              );
+            }),
           ],
           if (p.notes != null) ...[
             const _InfoCard(title: 'Catatan', icon: Icons.sticky_note_2_outlined),

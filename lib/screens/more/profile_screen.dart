@@ -238,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     leading: const Icon(Icons.info_outline, color: AppColors.primary),
                     title: const Text('Tentang Aplikasi'),
                     subtitle: const Text(
-                      'SakuraKotoba (桜言葉) v1.2.0\nSRS SM-2 · Reading Tracker · Grammar & Bungo · Honyaku · Agenda FIB UNDIP',
+                      'SakuraKotoba (桜言葉) v1.3.0\nSRS SM-2 · Reading Tracker · Grammar & Bungo · Honyaku · Agenda FIB UNDIP',
                     ),
                     isThreeLine: true,
                     trailing: TextButton.icon(

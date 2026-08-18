@@ -80,6 +80,23 @@ Aplikasi mobile **FIB UNDIP** tersedia dalam format APK mandiri yang dapat langs
 
 ---
 
+### 🔔 3. Notifikasi Push Lokal & Alarm Terjadwal Android (Notification & Alarm Engine)
+*Memastikan mahasiswa tidak melewatkan jadwal perkuliahan dan tetap konsisten me-review kartu hafalan.*
+- **⏰ Alarm Nyata Pengingat Kuliah 2 Jam:** Otomatis menjadwalkan notifikasi alarm bersuara dan getar di status bar HP 2 jam sebelum kelas dimulai sesuai hari dan jam mata kuliah.
+- **🌸 Pengingat Harian Review Flashcard SRS (Daily Streak):** Mengirimkan notifikasi malam hari (19:30 WIB) jika terdapat kartu hafalan kanji/kosakata yang jatuh tempo untuk direview agar *study streak* mahasiswa tetap terjaga.
+- **🛠️ Sinkronisasi Otomatis:** Sistem notifikasi otomatis diperbarui setiap kali mahasiswa menambah atau mengubah jadwal perkuliahan.
+
+---
+
+### 🔊 4. Audio Pelafalan Bahasa Jepang Alami (Text-to-Speech Choukai Engine)
+*Menunjang pembelajaran pendengaran (*Choukai*) dan pelafalan autentik beraksen Jepang:*
+- **🎙️ Tombol Speaker di Kamus Kanji & Kosakata:** Dengarkan pelafalan kanji, kosakata, dan contoh kalimat (*rei-bun*) secara langsung.
+- **🎴 Audio di Flashcard SRS (Front & Back):** Membantu mahasiswa melatih daya ingat audio saat latihan review kartu.
+- **📜 Audio pada Tata Bahasa (Grammar & Bungo):** Dengarkan intonasi kalimat pola tata bahasa modern maupun klasik.
+- **⚡ Engine Responsif:** Berbasis native TTS bahasa Jepang (`ja-JP`) dengan kecepatan pelafalan yang disesuaikan untuk mahasiswa.
+
+---
+
 ### 📖 2. Catatan Kampus & Diary Mahasiswa
 *Buku harian digital mahasiswa untuk mencatat dinamika perkuliahan dan bimbingan akademik.*
 - **Jurnal Refleksi Perkuliahan:** Mencatat rangkuman materi dosen, progres skripsi/tugas akhir, dan persiapan seminar.

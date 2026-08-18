@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../academic/gpa_screen.dart';
+import '../../services/notification_service.dart';
+import '../../services/tts_service.dart';
 import '../../services/update_checker_service.dart';
 import '../campus/class_schedule_screen.dart';
 import '../campus/campus_diary_screen.dart';
@@ -151,6 +153,38 @@ class _MoreScreenState extends State<MoreScreen> {
                 color: Colors.grey,
               ),
             ),
+          ),
+          _menuTile(
+            context,
+            icon: Icons.notifications_active_outlined,
+            title: 'Notifikasi Alarm & Pengingat Kuliah',
+            subtitle: 'Uji kirim notifikasi push & alarm pengingat 2 jam',
+            color: const Color(0xFF0284C7),
+            onTap: () async {
+              await NotificationService.instance.showInstantNotification(
+                id: 888,
+                title: '⏰ Pengingat Kuliah FIB UNDIP',
+                body: 'Kuliah Choukai (08:00 WIB) di Gedung B Lt.2. Notifikasi alarm lokal berhasil aktif!',
+              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Notifikasi alarm simulasi telah dikirim ke status bar.')),
+                );
+              }
+            },
+          ),
+          _menuTile(
+            context,
+            icon: Icons.volume_up_rounded,
+            title: 'Audio Suara Jepang (Choukai TTS)',
+            subtitle: 'Uji pelafalan suara aksen Jepang asli (ja-JP)',
+            color: const Color(0xFF8B5CF6),
+            onTap: () {
+              TtsService.instance.speakJapanese('桜言葉へようこそ！日本語の勉強を頑張りましょう。');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Memutar pelafalan audio Jepang...')),
+              );
+            },
           ),
           _menuTile(
             context,

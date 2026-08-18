@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/campus_photo.dart';
 import '../../models/schedule_item.dart';
 import '../../services/api_client.dart';
+import '../../services/notification_service.dart';
 import '../../services/session.dart';
 import '../../services/tab_switcher.dart';
 import '../../theme.dart';
@@ -53,6 +54,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               .map((p) => CampusPhoto.fromJson(p as Map<String, dynamic>))
               .toList();
         });
+
+        // Jadwalkan notifikasi harian SRS Review (jam 19.30) jika ada kartu due
+        final due = (data as Map<String, dynamic>)['srs_due_count'] as int? ?? 0;
+        NotificationService.instance.scheduleDailySrsReminder(dueCount: due);
       }
     } catch (e) {
       if (mounted) setState(() => _error = e);

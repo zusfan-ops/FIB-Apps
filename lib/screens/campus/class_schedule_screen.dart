@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/class_schedule.dart';
 import '../../services/api_client.dart';
+import '../../services/notification_service.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
 import 'class_schedule_form_screen.dart';
 
@@ -57,6 +58,8 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen>
             _totalCredits = credits;
             _loading = false;
           });
+          // Jadwalkan notifikasi alarm 2 jam sebelum kelas dimulai secara lokal di Android
+          NotificationService.instance.syncClassSchedules(list);
         }
       }
     } catch (e) {
