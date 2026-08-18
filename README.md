@@ -130,7 +130,7 @@ Aplikasi mobile **FIB UNDIP** tersedia dalam format APK mandiri yang dapat langs
 Halaman utama portal [https://fib.ordr.my.id/](https://fib.ordr.my.id/) mengusung estetika **Kertas Washi Jepang Autentik**:
 * 🎨 **Palet Warna Alami:** Latar Washi Cream (`#FAF7F2`), Tinta Sumi Charcoal (`#231F20`), Sakura Coral (`#E05668`), dan Indigo Deep (`#2A3B5C`).
 * 🪷 **Tipografi Jepang:** Font berkarakter *Shippori Mincho* dan *Noto Serif JP*.
-* ⚡ **1-Click Demo Login & Register:** Coba portal secara langsung dengan akun demo atau daftarkan akun baru.
+* 🔐 **Login & Registrasi Mahasiswa:** Akses portal mahasiswa dan daftarkan akun baru secara instan.
 * 📦 **Tombol Download APK & PWA:** Akses langsung ke installer Android v1.1.0 dan Web App.
 
 ---
@@ -184,10 +184,6 @@ php artisan route:clear
 php artisan view:clear
 php artisan config:clear
 ```
-
-> 🔑 **Akun Demo Bawaan:**  
-> - **Email:** `demo@nihon.test`  
-> - **Password:** `password`
 
 ### 3. Kompilasi Flutter Web & Android APK
 ```bash

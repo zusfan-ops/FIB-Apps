@@ -155,34 +155,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: const Text('Belum punya akun? Daftar'),
                     ),
-                    const SizedBox(height: 8),
-                    Center(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.flash_on, size: 16, color: Color(0xFFF43F5E)),
-                        label: const Text(
-                          'Gunakan Akun Demo (1-Click)',
-                          style: TextStyle(color: Color(0xFFF43F5E), fontWeight: FontWeight.w600),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFFFB7C5)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        ),
-                        onPressed: _loading
-                            ? null
-                            : () {
-                                _email.text = 'demo@nihon.test';
-                                _password.text = 'password';
-                                _login();
-                              },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Email: demo@nihon.test · Pass: password',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
-                    ),
                   ],
                 ),
               ),
