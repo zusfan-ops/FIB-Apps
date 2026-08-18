@@ -192,6 +192,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 12),
 
+            // Study Program info
+            if (user?.studyProgram != null && user!.studyProgram!.isNotEmpty)
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.menu_book_outlined, color: AppColors.primary),
+                  title: Text(user.studyProgram!),
+                  subtitle: const Text('Program Studi'),
+                ),
+              ),
+
             // University info
             if (user?.university != null && user!.university!.isNotEmpty)
               Card(
@@ -211,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: const Text('Catatan & Minat Sastra'),
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(user!.bio!),
+                    child: Text(user.bio!),
                   ),
                 ),
               ),

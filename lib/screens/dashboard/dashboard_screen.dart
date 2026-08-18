@@ -349,7 +349,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Target: ${user?.jlptLevel ?? 'N3'} · ${user?.university ?? 'FIB UNDIP'}',
+                  '${user?.studyProgram ?? user?.university ?? 'FIB UNDIP'} · Target JLPT ${user?.jlptLevel ?? 'N3'}',
                   style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],

@@ -20,11 +20,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _password = TextEditingController();
   final _confirm = TextEditingController();
   String _jlptLevel = 'N3';
+  String _studyProgram = 'S1 Bahasa dan Kebudayaan Jepang';
   bool _loading = false;
   bool _obscurePass = true;
   bool _obscureConfirm = true;
 
   static const _levels = ['N5', 'N4', 'N3', 'N2', 'N1'];
+
+  static const _studyPrograms = [
+    'S1 Bahasa dan Kebudayaan Jepang',
+    'S1 Sastra Indonesia',
+    'S1 Sastra Inggris',
+    'S1 Sejarah',
+    'S1 Ilmu Perpustakaan dan Informasi',
+    'S1 Antropologi Sosial',
+    'S2 Magister Ilmu Susastra',
+    'S2 Magister Ilmu Linguistik',
+    'S2 Magister Ilmu Sejarah',
+    'S3 Doktor Sejarah',
+  ];
 
   @override
   void dispose() {
@@ -47,6 +61,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'email': _email.text.trim(),
         'password': _password.text,
         'password_confirmation': _confirm.text,
+        'study_program': _studyProgram,
         'jlpt_level': _jlptLevel,
         'university': _university.text.trim().isEmpty ? null : _university.text.trim(),
       });
@@ -181,6 +196,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       validator: (v) =>
                           (v == null || !v.contains('@')) ? 'Email tidak valid' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _studyProgram,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Program Studi FIB UNDIP *',
+                        prefixIcon: Icon(Icons.menu_book_outlined),
+                      ),
+                      items: _studyPrograms
+                          .map((p) => DropdownMenuItem(
+                                value: p,
+                                child: Text(
+                                  p,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null) setState(() => _studyProgram = v);
+                      },
                     ),
                     const SizedBox(height: 16),
                     Row(

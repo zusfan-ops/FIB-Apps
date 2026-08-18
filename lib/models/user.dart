@@ -4,6 +4,7 @@ class User {
   final String email;
   final String? jlptLevel;
   final String? university;
+  final String? studyProgram;
   final String? bio;
   final String? avatarUrl;
 
@@ -13,6 +14,7 @@ class User {
     required this.email,
     this.jlptLevel,
     this.university,
+    this.studyProgram,
     this.bio,
     this.avatarUrl,
   });
@@ -23,6 +25,7 @@ class User {
         email: (json['email'] ?? '') as String,
         jlptLevel: json['jlpt_level'] as String?,
         university: json['university'] as String?,
+        studyProgram: json['study_program'] as String?,
         bio: json['bio'] as String?,
         avatarUrl: json['avatar_url'] as String?,
       );
@@ -33,6 +36,7 @@ class User {
         'email': email,
         'jlpt_level': jlptLevel,
         'university': university,
+        'study_program': studyProgram,
         'bio': bio,
         'avatar_url': avatarUrl,
       };

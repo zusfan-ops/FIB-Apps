@@ -21,12 +21,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _universityController;
   late TextEditingController _bioController;
   String _jlptLevel = 'N3';
+  String _studyProgram = 'S1 Bahasa dan Kebudayaan Jepang';
 
   AppPickedFile? _pickedFile;
   Uint8List? _imageBytes;
   bool _saving = false;
 
   final List<String> _jlptOptions = ['N5', 'N4', 'N3', 'N2', 'N1'];
+
+  static const List<String> _studyProgramOptions = [
+    'S1 Bahasa dan Kebudayaan Jepang',
+    'S1 Sastra Indonesia',
+    'S1 Sastra Inggris',
+    'S1 Sejarah',
+    'S1 Ilmu Perpustakaan dan Informasi',
+    'S1 Antropologi Sosial',
+    'S2 Magister Ilmu Susastra',
+    'S2 Magister Ilmu Linguistik',
+    'S2 Magister Ilmu Sejarah',
+    'S3 Doktor Sejarah',
+  ];
 
   @override
   void initState() {
@@ -38,6 +52,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _bioController = TextEditingController(text: user?.bio ?? '');
     if (user?.jlptLevel != null && _jlptOptions.contains(user!.jlptLevel)) {
       _jlptLevel = user.jlptLevel!;
+    }
+    if (user?.studyProgram != null && _studyProgramOptions.contains(user!.studyProgram)) {
+      _studyProgram = user.studyProgram!;
     }
   }
 
@@ -132,6 +149,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           final fields = <String, String>{
             'name': name,
             'university': university,
+            'study_program': _studyProgram,
             'jlpt_level': _jlptLevel,
             if (bio.isNotEmpty) 'bio': bio,
           };
@@ -149,6 +167,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           final payload = {
             'name': name,
             'university': university,
+            'study_program': _studyProgram,
             'jlpt_level': _jlptLevel,
             'bio': bio.isEmpty ? null : bio,
             'avatar_url': base64Image,
@@ -159,6 +178,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final payload = {
           'name': name,
           'university': university,
+          'study_program': _studyProgram,
           'jlpt_level': _jlptLevel,
           'bio': bio.isEmpty ? null : bio,
         };
@@ -308,6 +328,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                         validator: (v) =>
                             (v == null || v.trim().isEmpty) ? 'Nama tidak boleh kosong' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: _studyProgram,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Program Studi FIB UNDIP *',
+                          prefixIcon: Icon(Icons.menu_book_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                        ),
+                        items: _studyProgramOptions
+                            .map((p) => DropdownMenuItem(
+                                  value: p,
+                                  child: Text(
+                                    p,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ))
+                            .toList(),
+                        onChanged: (v) {
+                          if (v != null) setState(() => _studyProgram = v);
+                        },
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
