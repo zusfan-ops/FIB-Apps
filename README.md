@@ -58,13 +58,25 @@ Aplikasi mobile **FIB UNDIP** tersedia dalam format APK mandiri yang dapat langs
 
 ---
 
-### 📅 1. Jadwal Kuliah FIB UNDIP & Pengingat 2 Jam Sebelum Kelas
-*Dirancang khusus untuk manajemen jadwal perkuliahan mingguan mahasiswa Sastra Jepang FIB Universitas Diponegoro.*
-- **Tab Hari Terorganisir (Senin – Sabtu):** Mengelompokkan mata kuliah berdasarkan hari perkuliahan secara rapi.
-- **Data Perkuliahan Lengkap:** Nama mata kuliah (Choukai, Dokkai, Bunpo, Honyaku, Nihonshi, Nihon Bungaku), dosen pengampu, ruang kelas (Gedung A, B, D FIB UNDIP), bobot SKS, dan rentang jam mulai/selesai.
-- **⏰ Fitur Pengingat Otomatis 2 Jam:** Setiap mata kuliah dapat diaktifkan toggle alarm pengingat yang otomatis memberi notifikasi pengingat 2 jam sebelum jam masuk kelas.
-- **Card Preview di Dashboard:** Menampilkan kuliah hari ini secara langsung di beranda utama aplikasi.
-- **Kalkulator Total SKS:** Menghitung total beban SKS aktif semester berjalan secara otomatis.
+### 📅 1. Jadwal Kuliah & Kalender Interaktif Agenda Mahasiswa
+*Dirancang khusus untuk manajemen jadwal perkuliahan mingguan & agenda kegiatan mahasiswa FIB Universitas Diponegoro.*
+- **📅 Kalender Bulanan Interaktif:** Grid kalender responsif dengan navigasi bulan, pemilih tanggal cepat, serta tombol "Hari Ini".
+- **🎨 Indikator Warna Kategori (Color-Coded Badges & Dots):**
+  - 🟣 **Kuliah Kampus:** Jadwal perkuliahan mingguan (Senin–Sabtu) dengan ruang, dosen, & SKS.
+  - 🔴 **Deadline / UTS / UAS:** Penanda tenggat waktu tugas dan ujian semester.
+  - 🟢 **Tugas & Belajar Mandiri:** Catatan tugas harian dengan checkbox selesai.
+  - 🟠 **Kegiatan & Acara Kampus:** Seminar, bimbingan dosen, atau kegiatan Bunkasai.
+  - 🔵 **Pengingat / Lainnya:** Pengingat penting mahasiswa.
+- **🕒 Panel Rincian Jam Lengkap Saat Tanggal Diklik:** Klik tanggal apa pun di kalender untuk langsung membuka detail jam mulai–selesai, mata kuliah, dosen, ruang gedung FIB UNDIP, dan status pengerjaan.
+- **🔄 Mode Kalender & Mode Daftar:** Pengguna dapat beralih antara tampilan kalender visual dan tampilan list kronologis dengan mudah.
+- **⏰ Fitur Pengingat Otomatis 2 Jam:** Setiap mata kuliah dapat diaktifkan alarm pengingat 2 jam sebelum kelas dimulai.
+
+---
+
+### 🚀 2. Info & Pembaruan Otomatis APK (GitHub Releases Integration)
+- **⚡ Pengecekan Otomatis Saat Aplikasi Dibuka:** Memeriksa rilis APK terbaru dari GitHub Releases secara cerdas di latar belakang.
+- **📦 Dialog Pembaruan APK Langsung:** Menampilkan changelog rilis, nomor versi baru, ukuran file APK, tombol langsung **"Unduh Update APK"**, serta tautan ke halaman rilis GitHub.
+- **🔍 Fitur Cek Update Manual:** Mahasiswa dapat memeriksa pembaruan secara manual kapan saja melalui menu Profil maupun Fitur & Layanan Kampus.
 
 ---
 

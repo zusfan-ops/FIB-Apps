@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../models/class_schedule.dart';
 import '../../models/schedule_item.dart';
 import '../../services/api_client.dart';
 import '../../theme.dart';
+import '../../widgets/calendar_agenda_view.dart';
 import '../../widgets/common.dart';
 import 'schedule_form_screen.dart';
 
@@ -15,8 +17,12 @@ class ScheduleScreen extends StatefulWidget {
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
   List<ScheduleItem>? _items;
+  List<ClassSchedule> _classSchedules = [];
   Object? _error;
-  DateTime _anchor = DateTime.now();
+  DateTime _focusedMonth = DateTime.now();
+  DateTime _selectedDate = DateTime.now();
+  bool _isCalendarMode = true;
+  bool _loading = true;
 
   @override
   void initState() {
@@ -25,20 +31,49 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _error = null);
-    final from = _anchor.subtract(const Duration(days: 14));
-    final to = _anchor.add(const Duration(days: 60));
+    setState(() {
+      _error = null;
+      _loading = true;
+    });
+
+    final from = DateTime(_focusedMonth.year, _focusedMonth.month - 1, 1);
+    final to = DateTime(_focusedMonth.year, _focusedMonth.month + 2, 0);
+
     try {
-      final data = await ApiClient.instance.get(
-        '/schedule-items?from=${from.toIso8601String().substring(0, 10)}&to=${to.toIso8601String().substring(0, 10)}',
-      ) as List;
+      final futures = await Future.wait([
+        ApiClient.instance.get(
+          '/schedule-items?from=${from.toIso8601String().substring(0, 10)}&to=${to.toIso8601String().substring(0, 10)}',
+        ),
+        ApiClient.instance.get('/class-schedules').catchError((_) => {'schedules': []}),
+      ]);
+
+      final scheduleData = futures[0] as List;
+      final classData = futures[1];
+
+      List<ClassSchedule> loadedClasses = [];
+      if (classData is Map<String, dynamic>) {
+        final list = (classData['schedules'] as List? ?? []);
+        loadedClasses = list
+            .map((e) => ClassSchedule.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+
       if (mounted) {
-        setState(() => _items = data
-            .map((e) => ScheduleItem.fromJson(e as Map<String, dynamic>))
-            .toList());
+        setState(() {
+          _items = scheduleData
+              .map((e) => ScheduleItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+          _classSchedules = loadedClasses;
+          _loading = false;
+        });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = e);
+      if (mounted) {
+        setState(() {
+          _error = e;
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -55,7 +90,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     }
   }
 
-  Future<void> _delete(ScheduleItem item) async {
+  Future<void> _deleteItem(ScheduleItem item) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -63,7 +98,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         content: Text('"${item.title}" akan dihapus.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Hapus'),
+          ),
         ],
       ),
     );
@@ -78,18 +117,50 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     }
   }
 
-  Future<void> _add() async {
+  Future<void> _addSchedule({DateTime? initialDate}) async {
     final result = await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ScheduleFormScreen()),
+      MaterialPageRoute(
+        builder: (_) => ScheduleFormScreen(
+          // Pass prefilled date
+          item: initialDate != null
+              ? ScheduleItem(
+                  id: 0,
+                  title: '',
+                  date: initialDate.toIso8601String().substring(0, 10),
+                )
+              : null,
+        ),
+      ),
     );
     if (result == true) _load();
   }
 
-  Future<void> _edit(ScheduleItem item) async {
+  Future<void> _editItem(ScheduleItem item) async {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => ScheduleFormScreen(item: item)),
     );
     if (result == true) _load();
+  }
+
+  String _formatIndonesianDate(DateTime d) {
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    final dayName = days[d.weekday % 7];
+    final monthName = months[d.month - 1];
+    return '$dayName, ${d.day} $monthName ${d.year}';
   }
 
   String _dayLabel(DateTime d) {
@@ -97,113 +168,325 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final date = DateTime(d.year, d.month, d.day);
     final t = DateTime(today.year, today.month, today.day);
     final diff = date.difference(t).inDays;
-    if (diff == 0) return 'Hari ini';
+    if (diff == 0) return 'Hari Ini';
     if (diff == 1) return 'Besok';
     if (diff == -1) return 'Kemarin';
-    return formatDateShort(d);
+    return _formatIndonesianDate(d);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: () {
-                  setState(() => _anchor = _anchor.subtract(const Duration(days: 30)));
-                  _load();
-                },
-                icon: const Icon(Icons.chevron_left),
-              ),
-              Expanded(
-                child: TextButton.icon(
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _anchor,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2035),
-                    );
-                    if (picked != null) {
-                      setState(() => _anchor = picked);
-                      _load();
-                    }
+    return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _addSchedule(initialDate: _selectedDate),
+        icon: const Icon(Icons.add),
+        label: const Text('Jadwal Baru'),
+      ),
+      body: Column(
+        children: [
+          // View Switcher (Kalender / Daftar)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment<bool>(
+                      value: true,
+                      icon: Icon(Icons.calendar_month, size: 18),
+                      label: Text('Kalender'),
+                    ),
+                    ButtonSegment<bool>(
+                      value: false,
+                      icon: Icon(Icons.format_list_bulleted, size: 18),
+                      label: Text('Daftar'),
+                    ),
+                  ],
+                  selected: {_isCalendarMode},
+                  onSelectionChanged: (set) {
+                    setState(() => _isCalendarMode = set.first);
                   },
-                  icon: const Icon(Icons.calendar_month_outlined),
-                  label: Text(
-                    '${formatDateShort(_anchor)} ${_anchor.year}',
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                IconButton.filledTonal(
+                  tooltip: 'Segarkan Data',
+                  icon: const Icon(Icons.refresh, size: 20),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _load,
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: _loading && _items == null
+                ? const LoadingView()
+                : _error != null
+                    ? ErrorView(message: _error.toString(), onRetry: _load)
+                    : _isCalendarMode
+                        ? _buildCalendarView()
+                        : _buildListView(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tampilan Mode Kalender dengan Panel Detail Jam & Agenda
+  Widget _buildCalendarView() {
+    final selectedStr = _selectedDate.toIso8601String().substring(0, 10);
+    final selectedWeekday = _selectedDate.weekday; // 1=Senin ... 6=Sabtu, 7=Minggu
+
+    // ScheduleItems untuk tanggal terpilih
+    final dayItems = (_items ?? []).where((it) => it.date == selectedStr).toList();
+
+    // Routine ClassSchedules untuk hari ini (Senin - Sabtu)
+    final dayClasses = _classSchedules.where((cs) => cs.dayOfWeek == selectedWeekday).toList();
+
+    final totalDayEvents = dayItems.length + dayClasses.length;
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 90),
+        children: [
+          // Interactive Month Grid Calendar
+          CalendarAgendaView(
+            focusedMonth: _focusedMonth,
+            selectedDate: _selectedDate,
+            scheduleItems: _items ?? [],
+            classSchedules: _classSchedules,
+            onMonthChanged: (newMonth) {
+              setState(() => _focusedMonth = newMonth);
+              _load();
+            },
+            onDateSelected: (newDate) {
+              setState(() {
+                _selectedDate = newDate;
+                if (newDate.month != _focusedMonth.month || newDate.year != _focusedMonth.year) {
+                  _focusedMonth = DateTime(newDate.year, newDate.month, 1);
+                }
+              });
+            },
+          ),
+
+          // Detail Section Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _dayLabel(_selectedDate),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '$totalDayEvents kegiatan / jam kuliah terjadwal',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Tambah', style: TextStyle(fontSize: 12)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: () => _addSchedule(initialDate: _selectedDate),
+                ),
+              ],
+            ),
+          ),
+
+          // Event & Class list for selected date
+          if (totalDayEvents == 0)
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.event_available_outlined, size: 48, color: Colors.grey.shade400),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Tidak ada agenda/kuliah pada tanggal ini',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Manfaatkan hari ini untuk istirahat atau belajar mandiri.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.tonalIcon(
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Tambah Jadwal Hari Ini'),
+                    onPressed: () => _addSchedule(initialDate: _selectedDate),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            // 1. Tampilkan Jadwal Kuliah Rutin Mingguan FIB UNDIP
+            if (dayClasses.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Text(
+                  'JADWAL PERKULIAHAN KAMPUS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: () {
-                  setState(() => _anchor = _anchor.add(const Duration(days: 30)));
-                  _load();
-                },
-                icon: const Icon(Icons.chevron_right),
-              ),
-              IconButton(
-                tooltip: 'Hari ini',
-                onPressed: () {
-                  setState(() => _anchor = DateTime.now());
-                  _load();
-                },
-                icon: const Icon(Icons.today_outlined),
-              ),
+              for (final cs in dayClasses) _buildClassScheduleCard(cs),
             ],
-          ),
-        ),
-        Expanded(child: _buildList()),
-        FloatingActionButton.extended(
-          onPressed: _add,
-          icon: const Icon(Icons.add),
-          label: const Text('Jadwal'),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildList() {
-    if (_error != null) {
-      return ListView(children: [ErrorView(message: _error.toString(), onRetry: _load)]);
-    }
-    if (_items == null) return const LoadingView();
-
-    final items = _items!;
-    if (items.isEmpty) {
-      return const EmptyState(
-          message: 'Tidak ada agenda dalam rentang ini.', icon: Icons.event_note_outlined);
-    }
-
-    final grouped = <DateTime, List<ScheduleItem>>{};
-    for (final item in items) {
-      final d = DateTime.tryParse(item.date) ?? DateTime.now();
-      grouped.putIfAbsent(DateTime(d.year, d.month, d.day), () => []).add(item);
-    }
-    final sortedDays = grouped.keys.toList()..sort();
-
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
-      children: [
-        for (final day in sortedDays) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text(
-              _dayLabel(day),
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-            ),
-          ),
-          ...grouped[day]!.map((item) => _buildItem(item)),
+            // 2. Tampilkan Agenda/Tugas/Deadline/Ujian Tanggal Tersebut
+            if (dayItems.isNotEmpty) ...[
+              if (dayClasses.isNotEmpty) const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Text(
+                  'AGENDA & TUGAS MAHASISWA',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+              ),
+              for (final item in dayItems) _buildScheduleItemCard(item),
+            ],
+          ],
         ],
-      ],
+      ),
     );
   }
 
-  Widget _buildItem(ScheduleItem item) {
+  /// Card untuk Jadwal Kuliah Kampus (ClassSchedule)
+  Widget _buildClassScheduleCard(ClassSchedule cs) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: Color(0xFF4F6EF7), width: 1.2),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Badge Jam Mulai - Selesai
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4F6EF7).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.access_time_filled, size: 14, color: Color(0xFF4F6EF7)),
+                      const SizedBox(width: 4),
+                      Text(
+                        cs.formattedTime,
+                        style: const TextStyle(
+                          color: Color(0xFF4F6EF7),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '${cs.credits} SKS',
+                    style: TextStyle(
+                      color: Colors.amber.shade900,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                const Chip(
+                  label: Text('Kuliah FIB', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: Color(0xFFEEF2FF),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              cs.subject,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                if (cs.room != null) ...[
+                  Icon(Icons.meeting_room_outlined, size: 14, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Text(
+                    cs.room!,
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                if (cs.lecturer != null) ...[
+                  Icon(Icons.person_outline, size: 14, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      cs.lecturer!,
+                      style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Card untuk ScheduleItem (Agenda/Tugas/Ujian/Deadline)
+  Widget _buildScheduleItemCard(ScheduleItem item) {
     final icon = switch (item.type) {
       'kuliah' => Icons.school_outlined,
       'deadline' => Icons.alarm,
@@ -214,30 +497,52 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       _ => Icons.notifications_outlined,
     };
 
-    final color = switch (item.priority) {
-      'high' => AppColors.accent,
-      'low' => const Color(0xFF10B981),
-      _ => AppColors.primary,
+    final color = switch (item.type.toLowerCase()) {
+      'kuliah' => const Color(0xFF4F6EF7),
+      'deadline' || 'uts' || 'uas' => const Color(0xFFF43F5E),
+      'tugas' => const Color(0xFF10B981),
+      'kegiatan' => const Color(0xFFF59E0B),
+      _ => const Color(0xFF0EA5E9),
     };
 
     return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       child: ListTile(
-        onTap: () => _edit(item),
-        onLongPress: () => _delete(item),
+        onTap: () => _editItem(item),
+        onLongPress: () => _deleteItem(item),
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.12),
           child: Icon(icon, size: 20, color: color),
         ),
-        title: Text(
-          item.title,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            decoration: item.isDone ? TextDecoration.lineThrough : null,
-          ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                item.title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14.5,
+                  decoration: item.isDone ? TextDecoration.lineThrough : null,
+                ),
+              ),
+            ),
+            if (item.timeLabel.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  item.timeLabel,
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                ),
+              ),
+          ],
         ),
         subtitle: Text(
           [
-            if (item.timeLabel.isNotEmpty) item.timeLabel,
+            item.typeLabel,
             if (item.course != null) item.course!,
             if (item.location != null) item.location!,
           ].join(' · '),
@@ -248,6 +553,40 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           onChanged: (_) => _toggleDone(item),
         ),
       ),
+    );
+  }
+
+  /// Tampilan Mode Daftar (List View)
+  Widget _buildListView() {
+    final items = _items ?? [];
+    if (items.isEmpty) {
+      return const EmptyState(
+        message: 'Tidak ada agenda dalam rentang ini.',
+        icon: Icons.event_note_outlined,
+      );
+    }
+
+    final grouped = <DateTime, List<ScheduleItem>>{};
+    for (final item in items) {
+      final d = DateTime.tryParse(item.date) ?? DateTime.now();
+      grouped.putIfAbsent(DateTime(d.year, d.month, d.day), () => []).add(item);
+    }
+    final sortedDays = grouped.keys.toList()..sort();
+
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 90),
+      children: [
+        for (final day in sortedDays) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+            child: Text(
+              _dayLabel(day),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            ),
+          ),
+          ...grouped[day]!.map((item) => _buildScheduleItemCard(item)),
+        ],
+      ],
     );
   }
 }

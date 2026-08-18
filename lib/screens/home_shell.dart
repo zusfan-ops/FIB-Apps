@@ -6,6 +6,7 @@ import '../screens/more/more_screen.dart';
 import '../screens/reading/reading_home_screen.dart';
 import '../screens/srs/srs_home_screen.dart';
 import '../services/tab_switcher.dart';
+import '../services/update_checker_service.dart';
 import '../widgets/global_bottom_nav_bar.dart';
 
 class HomeShell extends StatefulWidget {
@@ -30,6 +31,14 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     TabSwitcher.index.addListener(_onTabChange);
+    // Pengecekan otomatis update APK GitHub Releases setelah aplikasi siap
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          UpdateCheckerService.instance.checkAndShowUpdateDialog(context);
+        }
+      });
+    });
   }
 
   @override

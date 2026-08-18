@@ -24,7 +24,7 @@ class _ScheduleFormScreenState extends State<ScheduleFormScreen> {
   String _priority = 'medium';
   bool _loading = false;
 
-  bool get _isEdit => widget.item != null;
+  bool get _isEdit => widget.item != null && widget.item!.id > 0;
 
   @override
   void initState() {

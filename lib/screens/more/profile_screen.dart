@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/user.dart';
 import '../../services/api_client.dart';
 import '../../services/session.dart';
+import '../../services/update_checker_service.dart';
 import '../../theme.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
 import '../auth/login_screen.dart';
@@ -96,7 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.25),
+                    color: AppColors.primary.withValues(alpha: 0.25),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -233,13 +234,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Card(
               child: Column(
                 children: [
-                  const ListTile(
-                    leading: Icon(Icons.info_outline, color: AppColors.primary),
-                    title: Text('Tentang Aplikasi'),
-                    subtitle: Text(
-                      'SakuraKotoba (桜言葉) v1.0.0\nSRS SM-2 · Reading Tracker · Grammar & Bungo · Honyaku · Agenda FIB UNDIP',
+                  ListTile(
+                    leading: const Icon(Icons.info_outline, color: AppColors.primary),
+                    title: const Text('Tentang Aplikasi'),
+                    subtitle: const Text(
+                      'SakuraKotoba (桜言葉) v1.2.0\nSRS SM-2 · Reading Tracker · Grammar & Bungo · Honyaku · Agenda FIB UNDIP',
                     ),
                     isThreeLine: true,
+                    trailing: TextButton.icon(
+                      style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                      icon: const Icon(Icons.system_update_alt_rounded, size: 16),
+                      label: const Text('Cek Update', style: TextStyle(fontSize: 12)),
+                      onPressed: () => UpdateCheckerService.instance.checkAndShowUpdateDialog(context, isManualCheck: true),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.system_update_rounded, color: Color(0xFFE11D48)),
+                    title: const Text('Pembaruan APK GitHub Releases'),
+                    subtitle: const Text('Periksa rilis versi terbaru & unduh APK'),
+                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    onTap: () => UpdateCheckerService.instance.checkAndShowUpdateDialog(context, isManualCheck: true),
                   ),
                   const Divider(height: 1),
                   ListTile(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../academic/gpa_screen.dart';
+import '../../services/update_checker_service.dart';
 import '../campus/class_schedule_screen.dart';
 import '../campus/campus_diary_screen.dart';
 import '../campus/campus_photo_screen.dart';
@@ -138,6 +139,26 @@ class _MoreScreenState extends State<MoreScreen> {
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProfileScreen()),
             ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(4, 16, 4, 8),
+            child: Text(
+              'SISTEM & PEMBARUAN',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          _menuTile(
+            context,
+            icon: Icons.system_update_rounded,
+            title: 'Cek Pembaruan Aplikasi',
+            subtitle: 'Periksa rilis APK terbaru di GitHub (v${UpdateCheckerService.currentVersion})',
+            color: const Color(0xFFE11D48),
+            onTap: () => UpdateCheckerService.instance.checkAndShowUpdateDialog(context, isManualCheck: true),
           ),
         ],
       ),
