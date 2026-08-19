@@ -575,29 +575,102 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           if (items.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Tidak ada jadwal hari ini.', style: TextStyle(color: Colors.grey)),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              margin: const EdgeInsets.only(top: 4, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.event_available_outlined, size: 36, color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tidak ada agenda/kuliah hari ini.',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Tambah Jadwal Kuliah', style: TextStyle(fontSize: 12)),
+                    onPressed: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ClassScheduleScreen()),
+                      );
+                      _load();
+                    },
+                  ),
+                ],
+              ),
             )
           else
             ...items.map((e) {
               final item = ScheduleItem.fromJson(e as Map<String, dynamic>);
+              final isKuliah = item.type == 'kuliah';
+              final color = isKuliah ? const Color(0xFF4F6EF7) : AppColors.accent;
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(
+                    color: isKuliah ? const Color(0xFF4F6EF7).withValues(alpha: 0.3) : Colors.grey.shade200,
+                  ),
+                ),
                 child: ListTile(
+                  onTap: () {
+                    if (isKuliah) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ClassScheduleScreen()),
+                      );
+                    } else {
+                      TabSwitcher.goTo(TabSwitcher.agenda);
+                    }
+                  },
                   leading: CircleAvatar(
-                    backgroundColor: item.type == 'kuliah' ? AppColors.primary.withValues(alpha: 0.15) : AppColors.accent.withValues(alpha: 0.15),
+                    backgroundColor: color.withValues(alpha: 0.12),
                     child: Icon(
-                      item.type == 'kuliah' ? Icons.school_outlined : Icons.alarm,
-                      color: item.type == 'kuliah' ? AppColors.primary : AppColors.accent,
+                      isKuliah ? Icons.school_outlined : Icons.alarm,
+                      color: color,
                     ),
                   ),
-                  title: Text(item.title,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(
-                    '${item.timeLabel}${item.course != null ? ' · ${item.course}' : ''}${item.location != null ? ' · ${item.location}' : ''}',
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
+                        ),
+                      ),
+                      if (item.timeLabel.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            item.timeLabel,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: color,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  isThreeLine: false,
+                  subtitle: Text(
+                    [
+                      if (item.course != null && item.course!.isNotEmpty) item.course!,
+                      if (item.location != null && item.location!.isNotEmpty) item.location!,
+                    ].join(' · '),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
                 ),
               );
             }),

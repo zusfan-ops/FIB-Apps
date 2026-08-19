@@ -7,6 +7,7 @@ import '../../services/api_client.dart';
 import '../../services/image_picker_helper.dart';
 import '../../services/session.dart';
 import '../../theme.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -285,6 +286,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         title: const Text('Edit Profil Mahasiswa'),
       ),
+      bottomNavigationBar: const GlobalBottomNavBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(

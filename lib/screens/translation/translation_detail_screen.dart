@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/translation_exercise.dart';
 import '../../services/api_client.dart';
 import '../../theme.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import 'translation_form_screen.dart';
 
 class TranslationDetailScreen extends StatefulWidget {
@@ -111,6 +112,7 @@ class _TranslationDetailScreenState extends State<TranslationDetailScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const GlobalBottomNavBar(),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

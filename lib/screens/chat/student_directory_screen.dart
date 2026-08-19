@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/user.dart';
 import '../../services/chat_service.dart';
 import '../../theme.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import '../../widgets/student_profile_dialog.dart';
 import 'chat_room_screen.dart';
 
@@ -86,6 +87,7 @@ class _StudentDirectoryScreenState extends State<StudentDirectoryScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const GlobalBottomNavBar(),
       body: Column(
         children: [
           // Search Input Bar

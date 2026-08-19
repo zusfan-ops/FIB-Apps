@@ -5,6 +5,7 @@ import '../../models/direct_message.dart';
 import '../../services/chat_service.dart';
 import '../../services/session.dart';
 import '../../theme.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import '../../widgets/student_profile_dialog.dart';
 import 'chat_room_screen.dart';
 import 'student_directory_screen.dart';
@@ -106,6 +107,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const GlobalBottomNavBar(),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,

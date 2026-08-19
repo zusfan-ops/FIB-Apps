@@ -142,6 +142,193 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     if (result == true) _load();
   }
 
+  void _showScheduleItemDetail(ScheduleItem item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final color = switch (item.type.toLowerCase()) {
+          'kuliah' => const Color(0xFF4F6EF7),
+          'deadline' || 'uts' || 'uas' => const Color(0xFFF43F5E),
+          'tugas' => const Color(0xFF10B981),
+          'kegiatan' => const Color(0xFFF59E0B),
+          _ => const Color(0xFF0EA5E9),
+        };
+
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      item.type == 'kuliah'
+                          ? Icons.school
+                          : item.type == 'deadline'
+                              ? Icons.alarm
+                              : Icons.event_note,
+                      color: color,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.title,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            decoration: item.isDone ? TextDecoration.lineThrough : null,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            item.typeLabel.toUpperCase(),
+                            style: TextStyle(
+                              color: color,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10.5,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+
+              _detailItemRow(Icons.calendar_today, 'Tanggal & Jam', '${item.date}${item.timeLabel.isNotEmpty ? ' · Jam ${item.timeLabel} WIB' : ''}', color: color),
+              if (item.course != null && item.course!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _detailItemRow(Icons.book_outlined, 'Mata Kuliah / Kategori', item.course!, color: const Color(0xFF4F6EF7)),
+              ],
+              if (item.location != null && item.location!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _detailItemRow(Icons.location_on_outlined, 'Lokasi / Ruangan', item.location!, color: const Color(0xFF10B981)),
+              ],
+              if (item.description != null && item.description!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _detailItemRow(Icons.notes, 'Deskripsi / Catatan', item.description!, color: Colors.grey.shade700),
+              ],
+              const SizedBox(height: 12),
+              _detailItemRow(Icons.flag_outlined, 'Prioritas', item.priority.toUpperCase(), color: Colors.orange.shade700),
+
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      label: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _deleteItem(item);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton.icon(
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Edit Agenda'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _editItem(item);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _detailItemRow(IconData icon, String label, String value, {required Color color}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 18, color: color),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   String _formatIndonesianDate(DateTime d) {
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
     const months = [
@@ -508,7 +695,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       child: ListTile(
-        onTap: () => _editItem(item),
+        onTap: () => _showScheduleItemDetail(item),
         onLongPress: () => _deleteItem(item),
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.12),

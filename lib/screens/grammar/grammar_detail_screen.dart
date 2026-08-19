@@ -4,6 +4,7 @@ import '../../models/grammar_pattern.dart';
 import '../../services/api_client.dart';
 import '../../theme.dart';
 import '../../widgets/audio_speaker_button.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import 'grammar_form_screen.dart';
 
 class GrammarDetailScreen extends StatefulWidget {
@@ -67,6 +68,7 @@ class _GrammarDetailScreenState extends State<GrammarDetailScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const GlobalBottomNavBar(),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
