@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../models/campus_photo.dart';
+import '../../models/direct_message.dart';
+import '../../models/marketplace_product.dart';
 import '../../models/schedule_item.dart';
 import '../../services/api_client.dart';
 import '../../services/chat_service.dart';
@@ -13,6 +15,10 @@ import '../../widgets/common.dart';
 import '../campus/campus_photo_screen.dart';
 import '../campus/class_schedule_screen.dart';
 import '../chat/chat_list_screen.dart';
+import '../chat/chat_room_screen.dart';
+import '../marketplace/marketplace_screen.dart';
+import '../marketplace/product_detail_screen.dart';
+import '../marketplace/product_form_screen.dart';
 import '../more/profile_screen.dart';
 import '../../widgets/smart_image_view.dart';
 
@@ -26,6 +32,8 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? _data;
   List<CampusPhoto> _latestPhotos = [];
+  List<ChatConversation> _latestConversations = [];
+  List<MarketplaceProduct> _latestMarketplaceProducts = [];
   Object? _error;
   bool _loading = true;
 
@@ -44,12 +52,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final futures = await Future.wait([
         ApiClient.instance.get('/dashboard'),
         ApiClient.instance.get('/campus-photos?per_page=3'),
-        ChatService.instance.refreshUnreadCount(),
+        ChatService.instance.getConversations(),
+        ApiClient.instance.get('/marketplace-products?per_page=6'),
       ]);
 
       final data = futures[0];
       final photoRes = futures[1];
       final photoList = (photoRes['data'] as List<dynamic>?) ?? [];
+      final convList = (futures[2] as List<ChatConversation>?) ?? [];
+      final marketRes = futures[3];
+      final marketList = (marketRes is Map<String, dynamic> && marketRes['data'] is List)
+          ? (marketRes['data'] as List).map((p) => MarketplaceProduct.fromJson(p as Map<String, dynamic>)).toList()
+          : <MarketplaceProduct>[];
 
       if (mounted) {
         setState(() {
@@ -57,6 +71,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _latestPhotos = photoList
               .map((p) => CampusPhoto.fromJson(p as Map<String, dynamic>))
               .toList();
+          _latestConversations = convList;
+          _latestMarketplaceProducts = marketList;
         });
 
         // Jadwalkan notifikasi harian SRS Review (jam 19.30) jika ada kartu due
@@ -168,6 +184,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       _buildGreeting(),
                       _buildFibUndipQuickActions(),
+                      _buildChatCard(),
+                      _buildMarketplaceCard(),
                       _buildTimelineCard(),
                       _buildReviewCard(),
                       _buildJlptCard(),
@@ -175,6 +193,420 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
+    );
+  }
+
+  Widget _buildChatCard() {
+    if (_latestConversations.isEmpty) return const SizedBox.shrink();
+
+    final latest = _latestConversations.first;
+    final user = latest.user;
+    final lastMsg = latest.lastMessage;
+    final avatarProvider = _getAvatarProvider(user.avatarUrl);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: latest.unreadCount > 0
+                ? const Color(0xFF10B981).withValues(alpha: 0.6)
+                : Colors.grey.shade200,
+            width: latest.unreadCount > 0 ? 1.5 : 1,
+          ),
+        ),
+        child: InkWell(
+          onTap: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => ChatRoomScreen(recipient: user)),
+            );
+            _load();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Card
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.chat_rounded, size: 16, color: Color(0xFF10B981)),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Pesan & Chat Mahasiswa',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                    ),
+                    const Spacer(),
+                    InkWell(
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ChatListScreen()),
+                        );
+                        _load();
+                      },
+                      child: Row(
+                        children: [
+                          Text(
+                            'Lihat Semua (${_latestConversations.length})',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right, size: 16),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 18),
+
+                // Latest Message Content
+                Row(
+                  children: [
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: const Color(0xFF10B981),
+                          backgroundImage: avatarProvider,
+                          child: avatarProvider == null
+                              ? Text(
+                                  user.name.isNotEmpty ? user.name[0].toUpperCase() : 'M',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        if (latest.unreadCount > 0)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF25D366),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${latest.unreadCount}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  user.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (lastMsg != null)
+                                Text(
+                                  lastMsg.formattedTime,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: latest.unreadCount > 0 ? const Color(0xFF10B981) : Colors.grey.shade500,
+                                    fontWeight: latest.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              if (user.studyProgram != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                  margin: const EdgeInsets.only(right: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    user.studyProgram!.split(' ').take(3).join(' '),
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      color: Colors.blue.shade800,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  lastMsg?.hasAttachment == true
+                                      ? '📷 [Foto/Gambar]'
+                                      : (lastMsg?.message ?? 'Memulai percakapan baru'),
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: latest.unreadCount > 0 ? Colors.black87 : Colors.grey.shade600,
+                                    fontWeight: latest.unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMarketplaceCard() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF047857).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.storefront_rounded, size: 16, color: Color(0xFF047857)),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Toko Mahasiswa/i (Preloved & Jasa)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                  ),
+                  const Spacer(),
+                  InkWell(
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
+                      );
+                      _load();
+                    },
+                    child: Row(
+                      children: [
+                        Text(
+                          'Lihat Semua',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, size: 16),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            if (_latestMarketplaceProducts.isEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF047857).withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF047857).withValues(alpha: 0.15)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.shopping_bag_outlined, color: Color(0xFF047857), size: 28),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Punya buku kuliah atau barang preloved?',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              'Jual langsung ke sesama mahasiswa FIB UNDIP',
+                              style: TextStyle(fontSize: 11, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          final res = await Navigator.of(context).push<bool>(
+                            MaterialPageRoute(builder: (_) => const ProductFormScreen()),
+                          );
+                          if (res == true) _load();
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF047857),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        child: const Text('Jual Barang', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 175,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                  itemCount: _latestMarketplaceProducts.length + 1,
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
+                  itemBuilder: (context, idx) {
+                    if (idx == _latestMarketplaceProducts.length) {
+                      return InkWell(
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
+                          );
+                          _load();
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 110,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.arrow_circle_right_outlined, color: Color(0xFF047857), size: 28),
+                              SizedBox(height: 6),
+                              Text(
+                                'Buka Toko\nSelengkapnya',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF047857)),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    final product = _latestMarketplaceProducts[idx];
+                    return InkWell(
+                      onTap: () async {
+                        final changed = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)),
+                        );
+                        if (changed == true) _load();
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 130,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                              child: Container(
+                                height: 85,
+                                width: double.infinity,
+                                color: Colors.grey.shade100,
+                                child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                                    ? SmartImageView(imageUrl: product.imageUrl!, fit: BoxFit.cover)
+                                    : const Icon(Icons.shopping_bag_outlined, color: Colors.grey),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    product.formattedPrice,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 12,
+                                      color: Color(0xFF047857),
+                                    ),
+                                    maxLines: 1,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    product.title,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    product.categoryLabel,
+                                    style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -195,31 +627,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: _quickBtn(
                   icon: Icons.calendar_month,
                   label: 'Jadwal Kuliah',
-                  subtitle: '⏰ Reminder 2 Jam',
+                  subtitle: '⏰ Reminder',
                   color: const Color(0xFF4F6EF7),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const ClassScheduleScreen()),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(
                 child: _quickBtn(
                   icon: Icons.chat_rounded,
                   label: 'Chat Mahasiswa',
-                  subtitle: 'WhatsApp Style',
+                  subtitle: 'WhatsApp',
                   color: const Color(0xFF10B981),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const ChatListScreen()),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _quickBtn(
+                  icon: Icons.storefront_rounded,
+                  label: 'Toko Mahasiswa',
+                  subtitle: 'Preloved',
+                  color: const Color(0xFF047857),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
               Expanded(
                 child: _quickBtn(
                   icon: Icons.photo_library,
                   label: 'Timeline Foto',
-                  subtitle: 'Album Kampus',
+                  subtitle: 'Album',
                   color: const Color(0xFFF43F5E),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const CampusPhotoScreen()),

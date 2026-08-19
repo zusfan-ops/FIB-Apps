@@ -9,6 +9,7 @@ import '../campus/campus_diary_screen.dart';
 import '../campus/campus_photo_screen.dart';
 import '../chat/chat_list_screen.dart';
 import '../dictionary/dictionary_screen.dart';
+import '../marketplace/marketplace_screen.dart';
 import '../thesis/thesis_screen.dart';
 import 'profile_screen.dart';
 import '../../screens/grammar/grammar_screen.dart';
@@ -39,6 +40,16 @@ class _MoreScreenState extends State<MoreScreen> {
                 letterSpacing: 1,
                 color: Color(0xFFF43F5E),
               ),
+            ),
+          ),
+          _menuTile(
+            context,
+            icon: Icons.storefront_rounded,
+            title: 'Toko Mahasiswa/i',
+            subtitle: 'Marketplace kampus: preloved buku kuliah, merchandise & jasa',
+            color: const Color(0xFF047857),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
             ),
           ),
           _menuTile(

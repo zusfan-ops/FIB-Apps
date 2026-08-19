@@ -38,6 +38,16 @@ class DirectMessage {
           : DateTime.now(),
     );
   }
+
+  bool get hasAttachment => attachmentUrl != null && attachmentUrl!.isNotEmpty;
+
+  String get formattedTime {
+    final now = DateTime.now();
+    if (now.day == createdAt.day && now.month == createdAt.month && now.year == createdAt.year) {
+      return '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
+    }
+    return '${createdAt.day}/${createdAt.month}';
+  }
 }
 
 class ChatConversation {

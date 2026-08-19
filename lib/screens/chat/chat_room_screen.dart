@@ -13,15 +13,16 @@ import '../../widgets/student_profile_dialog.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final User recipient;
+  final String? initialMessage;
 
-  const ChatRoomScreen({super.key, required this.recipient});
+  const ChatRoomScreen({super.key, required this.recipient, this.initialMessage});
 
   @override
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
 }
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
-  final TextEditingController _messageController = TextEditingController();
+  late final TextEditingController _messageController;
   final ScrollController _scrollController = ScrollController();
 
   List<DirectMessage> _messages = [];
@@ -41,6 +42,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   @override
   void initState() {
     super.initState();
+    _messageController = TextEditingController(text: widget.initialMessage ?? '');
     _loadMessages(initial: true);
     _startPolling();
   }
