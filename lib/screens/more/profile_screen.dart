@@ -381,11 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     leading: const Icon(Icons.info_outline, color: AppColors.primary),
                     title: const Text('Tentang Aplikasi'),
                     subtitle: const Text(
-<<<<<<< HEAD
                       'SakuraKotoba (桜言葉) v1.5.0\nSRS SM-2 · Reading Tracker · Grammar & Bungo · Honyaku · Chat Mahasiswa FIB UNDIP',
-=======
-                      'SakuraKotoba (桜言葉) v1.4.0\nSRS SM-2 · Reading Tracker · Grammar & Bungo · Honyaku · Chat Mahasiswa FIB UNDIP',
->>>>>>> 57b25ff6938d823f55bf0d58df3eaa42acdf4217
                     ),
                     isThreeLine: true,
                     trailing: TextButton.icon(
@@ -402,6 +398,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     subtitle: const Text('Periksa rilis versi terbaru & unduh APK'),
                     trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                     onTap: () => UpdateCheckerService.instance.checkAndShowUpdateDialog(context, isManualCheck: true),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.shield_outlined, color: Color(0xFFD97706)),
+                    title: const Text('Penafian & Privasi Mahasiswa', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    subtitle: const Text(
+                      'Sistem independen untuk manajemen studi mandiri. Tidak berafiliasi resmi dengan Universitas Diponegoro dan tidak menyimpan data rahasia/penting universitas.',
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                    isThreeLine: true,
                   ),
                   const Divider(height: 1),
                   ListTile(

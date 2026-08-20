@@ -76,11 +76,7 @@ class UpdateCheckerService {
   static final UpdateCheckerService instance = UpdateCheckerService._();
 
   /// Versi aplikasi saat ini
-<<<<<<< HEAD
   static const String currentVersion = '1.5.0';
-=======
-  static const String currentVersion = '1.4.0';
->>>>>>> 57b25ff6938d823f55bf0d58df3eaa42acdf4217
 
   /// Daftar repositori GitHub yang diperiksa
   static const List<String> _repos = [
