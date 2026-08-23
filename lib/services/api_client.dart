@@ -115,7 +115,10 @@ class ApiClient {
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Gagal terhubung ke server. Periksa koneksi internet Anda.', statusCode: -1);
+      // Log for debugging (terlihat di inspect / console browser PWA)
+      // ignore: avoid_print
+      print('[ApiClient] Network error on $method $uri: $e');
+      throw ApiException('Gagal terhubung ke server ($uri). Periksa koneksi internet Anda.', statusCode: -1);
     }
 
     final decoded = _decode(res.body);
